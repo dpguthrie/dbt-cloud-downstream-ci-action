@@ -81,11 +81,6 @@ query Lineage($environmentId: BigInt!, $filter: AppliedResourcesFilter!) {
 """
 
 
-def full_url(path, metadata=False):
-    include_metadata = "metadata." if metadata else ""
-    return f"https://{include_metadata}{HOST}{path}"
-
-
 def is_run_complete(run: Dict) -> bool:
     return run["status"] in [10, 20, 30]
 
@@ -118,7 +113,8 @@ def run_status_formatted(run: Dict, duration: float) -> str:
 
 
 async def dbt_cloud_api_request(path, *, method="get", metadata=False, **kwargs):
-    url = full_url(path, metadata)
+    include_metadata = "metadata." if metadata else ""
+    url = f"https://{include_metadata}{HOST}{path}"
     headers = {"Authorization": f"Bearer {TOKEN}"}
     async with httpx.AsyncClient(headers=headers) as client:
         response = await getattr(client, method)(url, **kwargs)
@@ -164,10 +160,13 @@ async def get_public_models_in_run(job_id: int, run_id: int, schema: str):
         if models:
             break
 
+        if i >= 60:
+            logger.error(f"Could not get models from run {run_id} after {i} attempts.")
+            raise Exception("Could not get public models from run.")
+
         i += 1
         await asyncio.sleep(1)
 
-    logger.info(f"Models: {models}")
     return [
         model
         for model in models
@@ -303,20 +302,33 @@ async def main():
                             "schema_override": SCHEMA_OVERRIDE,
                         }
                         all_jobs.append({"job_id": job["id"], "payload": job_payload})
+                    else:
+                        logger.info(
+                            f"CI job not found in project {project_id}. Skipping."
+                        )
 
-    # Only write back to the PR if there were multiple runs
+    # Comment on the PR with the results
     if len(all_runs) > 1:
-        df = pd.DataFrame(all_runs[1:])
+        df = pd.DataFrame(all_runs)
         df["status_emoji"] = df["status"].apply(get_run_status_emoji)
         df["url"] = df.apply(lambda x: f"[Run Details]({x['href']})", axis=1)
         df["is_downstream"] = df["job_id"].apply(lambda x: x == JOB_ID)
-        df = df[["status_emoji", "project_id", "job_id", "duration_humanized", "url"]]
-        df.columns = ["Status", "Project ID", "Job ID", "Duration", "URL"]
+        df = df[
+            [
+                "status_emoji",
+                "project_id",
+                "job_id",
+                "duration_humanized",
+                "url",
+                "is_downstream",
+            ]
+        ]
+        df.columns = ["Status", "Project ID", "Job ID", "Duration", "URL", "Downstream"]
         markdown_df = df.to_markdown(index=False)
-        comments = f"## Downstream CI Jobs\n\n{markdown_df}"
+        comments = f"## All Runs\n\n{markdown_df}"
         payload = {"body": comments}
     else:
-        payload = {"body": "## Downstream CI Jobs\n\nNo downstream dependencies found."}
+        payload = {"body": "## All Runs\n\nNo downstream dependencies found."}
 
     with httpx.Client(headers={"Authorization": f"Bearer {GITHUB_TOKEN}"}) as client:
         url = f"https://api.github.com/repos/{REPO}/issues/{PULL_REQUEST_ID}/comments"
