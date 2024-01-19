@@ -1,0 +1,31 @@
+name: "dbt Cloud Downstream CI Action"
+description: "This action will run dbt Cloud CI jobs taking into account downstream dependencies from projects set up with dbt Mesh"
+branding:
+  icon: "cloud"
+  color: "orange"
+author: "Doug Guthrie"
+inputs:
+  dbt_cloud_service_token:
+    description: dbt Cloud Service Token
+    required: true
+  dbt_cloud_account_id:
+    description: dbt Cloud account ID
+    required: true
+  dbt_cloud_job_id:
+    description: dbt Cloud CI Job ID for the current project
+    required: true
+  dbt_cloud_host:
+    description: dbt Cloud host
+    required: false
+    default: "cloud.getdbt.com"
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  env:
+    DBT_CLOUD_ACCOUNT_ID: ${{ inputs.dbt_cloud_account_id }}
+    DBT_CLOUD_SERVICE_TOKEN: ${{ inputs.dbt_cloud_service_token }}
+    DBT_CLOUD_JOB_ID: ${{ inputs.dbt_cloud_job_id }}
+    DBT_CLOUD_HOST: ${{ inputs.dbt_cloud_host }}
+    PULL_REQUEST_ID: ${{ github.event.number }}
+    GIT_SHA: ${{ github.event.pull_request.head.sha }}
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
