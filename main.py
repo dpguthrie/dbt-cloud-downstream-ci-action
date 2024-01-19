@@ -312,7 +312,7 @@ async def main():
         df = pd.DataFrame(all_runs)
         df["status_emoji"] = df["status"].apply(get_run_status_emoji)
         df["url"] = df.apply(lambda x: f"[Run Details]({x['href']})", axis=1)
-        df["is_downstream"] = df["job_id"].apply(lambda x: x == JOB_ID)
+        df["is_downstream"] = df["job_id"] != JOB_ID
         df = df[
             [
                 "status_emoji",
