@@ -80,11 +80,6 @@ query Lineage($environmentId: BigInt!, $filter: AppliedResourcesFilter!) {
 """
 
 
-def full_url(path, metadata=False):
-    include_metadata = "metadata." if metadata else ""
-    return f"https://{include_metadata}{HOST}{path}"
-
-
 def is_run_complete(run: Dict) -> bool:
     return run["status"] in [10, 20, 30]
 
@@ -93,31 +88,26 @@ def is_successful_run(run: Dict) -> bool:
     return run["status"] == 10
 
 
-def remove_job(all_jobs: List[Dict], job_id_to_remove: int) -> List[Dict]:
-    return [job for job in all_jobs if job["job_id"] != job_id_to_remove]
-
-
 def get_run_status_emoji(status: int) -> str:
     status_dict = {10: SUCCESS, 20: FAILURE, 30: CANCELLED}
     return status_dict[status]
 
 
-def run_status_formatted(run: Dict, duration: float) -> str:
+def run_status_formatted(run: Dict) -> str:
     """Format a string indicating status of job.
+
     Args:
         run (dict): Dictionary representation of a Run
-        time (float): Elapsed time since job triggered
     """
     status = run["status_humanized"]
     url = run["href"]
-    return (
-        f'\nStatus: "{status.capitalize()}"\nElapsed time: {duration}s\n'
-        f"View here: {url}"
-    )
+    duration = run["duration"]
+    return f'\nStatus: "{status}"\nElapsed time: {duration}s\n' f"View here: {url}"
 
 
 async def dbt_cloud_api_request(path, *, method="get", metadata=False, **kwargs):
-    url = full_url(path, metadata)
+    include_metadata = "metadata." if metadata else ""
+    url = f"https://{include_metadata}{HOST}{path}"
     headers = {"Authorization": f"Bearer {TOKEN}"}
     async with httpx.AsyncClient(headers=headers) as client:
         response = await getattr(client, method)(url, **kwargs)
@@ -142,7 +132,7 @@ async def trigger_job(account_id, job_id, payload) -> Dict:
         run_path = f"/api/v2/accounts/{account_id}/runs/{run_id}/"
         response = await dbt_cloud_api_request(run_path)
         run = response["data"]
-        logger.info(run_status_formatted(run, run["duration"]))
+        logger.info(run_status_formatted(run))
         if is_run_complete(run):
             break
 
@@ -289,7 +279,7 @@ async def main():
                         }
                         all_jobs.append({"job_id": job["id"], "payload": job_payload})
 
-    # Only write back to the PR if there were multiple runs
+    # Create markdown table with links to downstream jobs
     if len(all_runs) > 1:
         df = pd.DataFrame(all_runs[1:])
         df["status_emoji"] = df["status"].apply(get_run_status_emoji)
@@ -300,6 +290,8 @@ async def main():
         markdown_df = df.to_markdown(index=False)
         comments = f"## Downstream CI Jobs\n\n{markdown_df}"
         payload = {"body": comments}
+
+    # Otherwise, indicate no downstream dependencies found
     else:
         payload = {"body": "## Downstream CI Jobs\n\nNo downstream dependencies found."}
 
