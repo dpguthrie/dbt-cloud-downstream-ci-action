@@ -44,6 +44,7 @@ query Job($jobId: BigInt!, $runId: BigInt, $schema: String) {
       uniqueId
       database
       access
+      executionTime
     }
   }
 }
@@ -157,7 +158,11 @@ async def get_public_models_in_run(job_id: int, run_id: int, schema: str):
         path, method="post", metadata=True, json=payload
     )
     models = results.get("data", {}).get("job", {}).get("models", [])
-    return [model for model in models if model["access"].strip() == "public"]
+    return [
+        model
+        for model in models
+        if model["access"].strip() == "public" and model["executionTime"] is not None
+    ]
 
 
 async def get_dependent_downstream_projects(public_models: List[Dict]):
