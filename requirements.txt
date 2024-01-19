@@ -1,3 +1,4 @@
 httpx
 pandas
 tabulate
+typing-extensions
