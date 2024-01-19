@@ -4,7 +4,7 @@ This is a Github action that is designed specifically for dbt Cloud customers wh
 
 ## Demo
 
-<div style="position: relative; padding-bottom: 77.14285714285715%; height: 0;"><iframe src="https://www.loom.com/embed/d6e99e8ae881403a84f5aaf25db68e77?sid=1fcb9764-c5b6-467e-b177-a47316e2673d" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+https://www.loom.com/share/d6e99e8ae881403a84f5aaf25db68e77?sid=7e383c51-7216-4e41-8f7f-b5f11221f364
 
 ## Process
 
