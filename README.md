@@ -16,6 +16,9 @@ Additionally, the whole process is designed to be asynchronous so that downstrea
 - `dbt_cloud_account_id`
 - `dbt_cloud_job_id` - This is the CI job to be used that's created within the project you place this action
 - `dbt_cloud_host` - This is optional and should be used if your account is not in the North American multi-tenant instance
+- `pull_request_id` - Use `${{ github.event.number }}`
+- `git_sha` - Use `${{ github.event.pull_request.head.sha }}`
+- `github_token` - Use `${{ secrets.GITHUB_TOKEN }}`
 
 ## Caveats
 
@@ -83,12 +86,15 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: dbt Cloud Downstream CI Action
-      uses: dpguthrie/dbt-cloud-downstream-ci-action@v0.1.0
+      uses: dpguthrie/dbt-cloud-downstream-ci-action@0.2.0
       with:
-        account_id: ${{ secrets.ACCOUNT_ID }}
-        job_id: ${{ secrets.JOB_ID }}
-        service_token: ${{ secrets.SERVICE_TOKEN }}
-        host: 'cloud.getdbt.com'  # Optional
+        dbt_cloud_account_id: ${{ secrets.DBT_CLOUD_ACCOUNT_ID }}
+        dbt_cloud_job_id: ${{ secrets.DBT_CLOUD_JOB_ID }}
+        dbt_cloud_service_token: ${{ secrets.DBT_CLOUD_SERVICE_TOKEN }}
+        dbt_cloud_host: 'cloud.getdbt.com'  # Optional
+        pull_request_id: ${{ github.event.number }}
+        git_sha: ${{ github.event.pull_request.head.sha }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ## License
