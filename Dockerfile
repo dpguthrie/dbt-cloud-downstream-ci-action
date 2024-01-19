@@ -1,14 +1,17 @@
-FROM python:3-slim AS builder
-ADD . /app
-WORKDIR /app
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
 
-# We are installing a dependency here directly into our app source dir
-RUN pip install --target=/app httpx pandas tabulate
+# Set the working directory in the container
+WORKDIR /usr/src/app
 
-# A distroless container image with Python and some basics like SSL certificates
-# https://github.com/GoogleContainerTools/distroless
-FROM gcr.io/distroless/python3-debian10
-COPY --from=builder /app /app
-WORKDIR /app
-ENV PYTHONPATH /app
-CMD ["/app/main.py"]
+# Copy the dependencies file to the working directory
+COPY requirements.txt .
+
+# Install any dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the script to the container
+COPY main.py .
+
+# Run the script when the container launches
+CMD ["python", "./main.py"]
