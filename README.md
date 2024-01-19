@@ -2,6 +2,10 @@
 
 This is a Github action that is designed specifically for dbt Cloud customers who have implemented dbt Mesh.  The overarching idea here is that customers want to understand how downstream projects will be impacted by changes in upstream projects.  And, specifically, changes to public models that downstream projects have taken dependencies on.
 
+## Demo
+
+<div style="position: relative; padding-bottom: 77.14285714285715%; height: 0;"><iframe src="https://www.loom.com/embed/d6e99e8ae881403a84f5aaf25db68e77?sid=1fcb9764-c5b6-467e-b177-a47316e2673d" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+
 ## Process
 
 The diagram below shows how this action is designed:
