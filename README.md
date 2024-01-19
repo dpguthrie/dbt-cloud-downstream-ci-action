@@ -83,7 +83,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: dbt Cloud Downstream CI Action
-      uses: dpguthrie/dbt-cloud-downstream-ci-action@v1
+      uses: dpguthrie/dbt-cloud-downstream-ci-action@v0.1.0
       with:
         account_id: ${{ secrets.ACCOUNT_ID }}
         job_id: ${{ secrets.JOB_ID }}
