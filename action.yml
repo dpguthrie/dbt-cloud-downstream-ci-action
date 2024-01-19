@@ -18,6 +18,15 @@ inputs:
     description: dbt Cloud host
     required: false
     default: "cloud.getdbt.com"
+  pull_request_id:
+    description: Pull request ID
+    required: true
+  git_sha:
+    description: Git SHA
+    required: true
+  github_token:
+    description: GitHub token
+    required: true
 runs:
   using: "docker"
   image: "Dockerfile"
@@ -26,6 +35,6 @@ runs:
     DBT_CLOUD_SERVICE_TOKEN: ${{ inputs.dbt_cloud_service_token }}
     DBT_CLOUD_JOB_ID: ${{ inputs.dbt_cloud_job_id }}
     DBT_CLOUD_HOST: ${{ inputs.dbt_cloud_host }}
-    PULL_REQUEST_ID: ${{ github.event.number }}
-    GIT_SHA: ${{ github.event.pull_request.head.sha }}
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    PULL_REQUEST_ID: ${{ inputs.pull_request_id }}
+    GIT_SHA: ${{ inputs.git_sha }}
+    GITHUB_TOKEN: ${{ inputs.github_token }}
