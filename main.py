@@ -158,6 +158,7 @@ async def get_public_models_in_run(job_id: int, run_id: int, schema: str):
         path, method="post", metadata=True, json=payload
     )
     models = results.get("data", {}).get("job", {}).get("models", [])
+    logger.info(f"Models: {models}")
     return [
         model
         for model in models
