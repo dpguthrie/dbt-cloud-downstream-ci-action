@@ -89,16 +89,12 @@ def is_successful_run(run: Dict) -> bool:
     return run["status"] == 10
 
 
-def remove_job(all_jobs: List[Dict], job_id_to_remove: int) -> List[Dict]:
-    return [job for job in all_jobs if job["job_id"] != job_id_to_remove]
-
-
 def get_run_status_emoji(status: int) -> str:
     status_dict = {10: SUCCESS, 20: FAILURE, 30: CANCELLED}
     return status_dict[status]
 
 
-def run_status_formatted(run: Dict, duration: float) -> str:
+def run_status_formatted(run: Dict) -> str:
     """Format a string indicating status of job.
     Args:
         run (dict): Dictionary representation of a Run
@@ -106,10 +102,8 @@ def run_status_formatted(run: Dict, duration: float) -> str:
     """
     status = run["status_humanized"]
     url = run["href"]
-    return (
-        f'\nStatus: "{status.capitalize()}"\nElapsed time: {duration}s\n'
-        f"View here: {url}"
-    )
+    duration = run["duration_humanized"]
+    return f'\nStatus: "{status}"\nElapsed time: {duration}\n' f"View here: {url}"
 
 
 async def dbt_cloud_api_request(path, *, method="get", metadata=False, **kwargs):
@@ -139,7 +133,7 @@ async def trigger_job(account_id, job_id, payload) -> Dict:
         run_path = f"/api/v2/accounts/{account_id}/runs/{run_id}/"
         response = await dbt_cloud_api_request(run_path)
         run = response["data"]
-        logger.info(run_status_formatted(run, run["duration"]))
+        logger.info(run_status_formatted(run))
         if is_run_complete(run):
             break
 
@@ -283,7 +277,7 @@ async def main():
                 )
                 continue
 
-            # Loop through each project with
+            # Loop through each project and find any downstream nodes
             for project_id, project_dict in projects.items():
                 logger.info(f"Checking for downstream nodes in project {project_id}")
                 nodes = await get_downstream_nodes(project_dict)
@@ -334,7 +328,8 @@ async def main():
     with httpx.Client(headers={"Authorization": f"Bearer {GITHUB_TOKEN}"}) as client:
         url = f"https://api.github.com/repos/{REPO}/issues/{PULL_REQUEST_ID}/comments"
         response = client.post(url, json=payload)
-        response.raise_for_status()
+        if not response.ok:
+            logger.error(response.text)
 
     if any(not is_successful_run(run) for run in all_runs):
         sys.exit(1)
