@@ -18,23 +18,14 @@ inputs:
     description: dbt Cloud host
     required: false
     default: "cloud.getdbt.com"
-  pull_request_id:
-    description: Pull request ID
-    required: true
-  git_sha:
-    description: Git SHA
-    required: true
-  github_token:
-    description: GitHub token
-    required: true
+  include_downstream:
+    description: Include downstream models when constructing the step override command (e.g. `dbt build -s model_1+`)
+    required: false
+    default: "true"
+  dbt_command:
+    description: The command to run in dbt Cloud - one of `run` or `build`
+    required: false
+    default: "build"
 runs:
   using: "docker"
   image: "Dockerfile"
-  env:
-    DBT_CLOUD_ACCOUNT_ID: ${{ inputs.dbt_cloud_account_id }}
-    DBT_CLOUD_SERVICE_TOKEN: ${{ inputs.dbt_cloud_service_token }}
-    DBT_CLOUD_JOB_ID: ${{ inputs.dbt_cloud_job_id }}
-    DBT_CLOUD_HOST: ${{ inputs.dbt_cloud_host }}
-    PULL_REQUEST_ID: ${{ inputs.pull_request_id }}
-    GIT_SHA: ${{ inputs.git_sha }}
-    GITHUB_TOKEN: ${{ inputs.github_token }}
