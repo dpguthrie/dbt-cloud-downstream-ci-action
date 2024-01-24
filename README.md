@@ -16,13 +16,14 @@ Additionally, the whole process is designed to be asynchronous so that downstrea
 
 ## Inputs
 
-- `dbt_cloud_service_token`
-- `dbt_cloud_account_id`
-- `dbt_cloud_job_id` - This is the CI job to be used that's created within the project you place this action
-- `dbt_cloud_host` - This is optional and should be used if your account is not in the North American multi-tenant instance
-- `pull_request_id` - Use `${{ github.event.number }}`
-- `git_sha` - Use `${{ github.event.pull_request.head.sha }}`
-- `github_token` - Use `${{ secrets.GITHUB_TOKEN }}`
+| **Name**                  | **Description**                                                                                                 | Required | Default            |
+|---------------------------|-----------------------------------------------------------------------------------------------------------------|----------|--------------------|
+| `dbt_cloud_service_token` | The service token generated from dbt Cloud.  **Ensure you have the proper permissions to trigger jobs**         | `True`   |                    |
+| `dbt_cloud_account_id`    | This is the account ID which contains the projects you'll be triggering CI jobs for.                            | `True`   |                    |
+| `dbt_cloud_job_id`        | This is the job ID corresponding to the CI job linked to the project you configure this action in.              | `True`   |                    |
+| `dbt_cloud_host`          | Where your dbt Cloud is located.                                                                                | `False`  | `cloud.getdbt.com` |
+| `include_downstream`      | Whether to include downstream models (e.g. adding the `+` to the right of any models run in downstream CI jobs) | `False`  | `true`             |
+| `dbt_command`             | The command to run within downstream CI jobs (`build` or `run`)                                                 | `False`  | `build`            |
 
 ## Caveats
 

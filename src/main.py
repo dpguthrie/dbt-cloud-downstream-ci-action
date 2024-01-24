@@ -2,8 +2,9 @@
 import asyncio
 import logging
 import os
+import re
 import sys
-from typing import Dict, List
+from typing import Dict, List, Union
 
 # third party
 import httpx
@@ -16,19 +17,40 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
-# dbt Cloud variables
-ACCOUNT_ID = os.getenv("DBT_CLOUD_ACCOUNT_ID", None)
-TOKEN = os.getenv("DBT_CLOUD_SERVICE_TOKEN", None)
-HOST = os.getenv("DBT_CLOUD_HOST", "cloud.getdbt.com")
-JOB_ID = os.getenv("DBT_CLOUD_JOB_ID", None)
+def str_to_bool(value: Union[str, bool]) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value.lower() == "true":
+        return True
+    if value.lower() == "false":
+        return False
 
-# From GitHub Action
-PULL_REQUEST_ID = int(os.getenv("PULL_REQUEST_ID", None))
+    raise ValueError(f"Invalid value: {value}")
+
+
+def extract_pr_number(s):
+    match = re.search(r"refs/pull/(\d+)/merge", s)
+    return int(match.group(1)) if match else None
+
+
+# dbt Cloud Env Vars
+ACCOUNT_ID = os.getenv("INPUT_DBT_CLOUD_ACCOUNT_ID", None)
+TOKEN = os.getenv("INPUT_DBT_CLOUD_SERVICE_TOKEN", None)
+HOST = os.getenv("INPUT_DBT_CLOUD_HOST", "cloud.getdbt.com")
+JOB_ID = os.getenv("INPUT_DBT_CLOUD_JOB_ID", None)
+
+# Github Env Vars
 REPO = os.getenv("GITHUB_REPOSITORY", None)
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", None)
 GIT_SHA = os.getenv("GIT_SHA", None)
+GITHUB_REF = os.getenv("GITHUB_REF", None)
+
+# Optional Env Vars
+INCLUDE_DOWNSTREAM = str_to_bool(os.getenv("INPUT_INCLUDE_DOWNSTREAM", True))
+DBT_COMMAND = os.getenv("INPUT_DBT_COMMAND", "build")
 
 # Derived variables
+PULL_REQUEST_ID = extract_pr_number(GITHUB_REF)
 SCHEMA_OVERRIDE = f"dbt_cloud_pr_{JOB_ID}_{PULL_REQUEST_ID}"
 
 # Run Status Indicators
@@ -36,6 +58,7 @@ SUCCESS = ":white_check_mark:"
 FAILURE = ":x:"
 CANCELLED = ":stop_sign:"
 
+# GraphQL Queries
 JOB_QUERY = """
 query Job($jobId: BigInt!, $runId: BigInt, $schema: String) {
   job(id: $jobId, runId: $runId) {
@@ -85,13 +108,25 @@ def is_run_complete(run: Dict) -> bool:
     return run["status"] in [10, 20, 30]
 
 
-def is_successful_run(run: Dict) -> bool:
+def is_run_successful(run: Dict) -> bool:
     return run["status"] == 10
 
 
 def get_run_status_emoji(status: int) -> str:
     status_dict = {10: SUCCESS, 20: FAILURE, 30: CANCELLED}
     return status_dict[status]
+
+
+def get_dbt_command(nodes: List[Dict]) -> List[str]:
+    command = f"dbt {DBT_COMMAND}"
+    string = "+ " if INCLUDE_DOWNSTREAM else " "
+    command += f" -s {string.join([node['name'] for node in nodes])}"
+    if INCLUDE_DOWNSTREAM:
+        command += "+"
+
+    # TODO: Add database override to command
+    command += f" --vars '{{ref_schema_override: {SCHEMA_OVERRIDE}}}'"
+    return [command]
 
 
 def run_status_formatted(run: Dict) -> str:
@@ -106,7 +141,9 @@ def run_status_formatted(run: Dict) -> str:
     return f'\nStatus: "{status}"\nElapsed time: {duration}\n' f"View here: {url}"
 
 
-async def dbt_cloud_api_request(path, *, method="get", metadata=False, **kwargs):
+async def dbt_cloud_api_request(
+    path: str, *, method: str = "get", metadata: bool = False, **kwargs
+):
     include_metadata = "metadata." if metadata else ""
     url = f"https://{include_metadata}{HOST}{path}"
     headers = {"Authorization": f"Bearer {TOKEN}"}
@@ -116,7 +153,7 @@ async def dbt_cloud_api_request(path, *, method="get", metadata=False, **kwargs)
         return response.json()
 
 
-async def trigger_job(account_id, job_id, payload) -> Dict:
+async def trigger_job(account_id: int, job_id: int, payload: Dict) -> Dict:
     logger.info(f"Triggering CI job {job_id}")
 
     path = f"/api/v2/accounts/{account_id}/jobs/{job_id}/run/"
@@ -251,7 +288,7 @@ async def main():
             # Add run to list of all runs
             all_runs.append(run)
 
-            if not is_successful_run(run):
+            if not is_run_successful(run):
                 logger.info(f"Job {run['job_id']} was not successful.")
                 continue
 
@@ -283,9 +320,7 @@ async def main():
                 nodes = await get_downstream_nodes(project_dict)
                 if nodes:
                     logger.info(f"Found downstream nodes in project {project_id}")
-                    steps_override = [
-                        f'dbt build -s {"+ ".join([node["name"] for node in nodes]) + "+"} --vars \'{{ref_schema_override: {SCHEMA_OVERRIDE}}}\''
-                    ]
+                    steps_override = get_dbt_command(nodes)
                     job = await get_ci_job(project_id)
                     if job is not None:
                         logger.info(
@@ -328,10 +363,10 @@ async def main():
     with httpx.Client(headers={"Authorization": f"Bearer {GITHUB_TOKEN}"}) as client:
         url = f"https://api.github.com/repos/{REPO}/issues/{PULL_REQUEST_ID}/comments"
         response = client.post(url, json=payload)
-        if not response.ok:
+        if response.is_error:
             logger.error(response.text)
 
-    if any(not is_successful_run(run) for run in all_runs):
+    if any(not is_run_successful(run) for run in all_runs):
         sys.exit(1)
 
     sys.exit(0)

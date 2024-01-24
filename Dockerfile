@@ -1,18 +1,25 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9.18-slim
+FROM python:3.11-buster as builder
 
-# Set the working directory in the container
-ADD . /app
+RUN pip install poetry==1.7.1
+
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
+
 WORKDIR /app
 
-# Copy the dependencies file to the working directory
-COPY requirements.txt .
+COPY pyproject.toml poetry.lock ./
 
-# Install any dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --without dev --no-root
 
-# Copy the script to the container
-COPY main.py .
+FROM python:3.11-slim-buster as runtime
 
-# Run the script when the container launches
-CMD ["python", "/app/main.py"]
+ENV VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:$PATH"
+
+COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+
+COPY src/main.py ./main.py
+
+ENTRYPOINT ["python", "-m", "/main.py"]
