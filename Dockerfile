@@ -22,4 +22,4 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 COPY src/main.py ./main.py
 
-ENTRYPOINT ["python", "-m", "/main.py"]
+ENTRYPOINT ["python", "/main.py"]
