@@ -26,8 +26,12 @@ inputs:
     description: The command to run in dbt Cloud - one of `run` or `build`
     required: false
     default: "build"
+  github_token:
+    description: GitHub token
+    required: false
+    default: ${{ secrets.GITHUB_TOKEN }}
 runs:
   using: "docker"
   image: "Dockerfile"
   env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    GITHUB_TOKEN: ${{ inputs.github_token }}
