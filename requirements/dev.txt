@@ -1,0 +1,10 @@
+-r base.txt
+
+black
+isort
+flake8
+mypy
+pre-commit
+ipython
+python-dotenv
+pytest-dotenv
