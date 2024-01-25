@@ -1,6 +1,6 @@
 # Downstream CI
 
-This is a Github action that is designed specifically for dbt Cloud customers who have implemented dbt Mesh.  The overarching idea here is that customers want to understand how downstream projects will be impacted by changes in upstream projects.  And, specifically, changes to public models that downstream projects have taken dependencies on.
+This is a Github action that is designed specifically for dbt Cloud customers who have implemented dbt Mesh.  The overarching idea here is that customers want to understand how downstream projects will be impacted by changes in public models further upstream.
 
 ## Demo
 
@@ -21,6 +21,7 @@ Additionally, the whole process is designed to be asynchronous so that downstrea
 | `dbt_cloud_service_token` | The service token generated from dbt Cloud.  **Ensure you have the proper permissions to trigger jobs**         | `True`   |                    |
 | `dbt_cloud_account_id`    | This is the account ID which contains the projects you'll be triggering CI jobs for.                            | `True`   |                    |
 | `dbt_cloud_job_id`        | This is the job ID corresponding to the CI job linked to the project you configure this action in.              | `True`   |                    |
+| `github_token`             | GitHub token used to write back to the PR the results of the action.  You can use `${{ secrets.GITHUB_TOKEN }}`, which is available for all github action runs (so no additional setup, maintenanance of secrets on your part).                                                 | `False`  |             |
 | `dbt_cloud_host`          | Where your dbt Cloud is located.                                                                                | `False`  | `cloud.getdbt.com` |
 | `include_downstream`      | Whether to include downstream models (e.g. adding the `+` to the right of any models run in downstream CI jobs) | `False`  | `true`             |
 | `dbt_command`             | The command to run within downstream CI jobs (`build` or `run`)                                                 | `False`  | `build`            |
@@ -91,14 +92,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: dbt Cloud Downstream CI Action
-      uses: dpguthrie/dbt-cloud-downstream-ci-action@0.6.2
+      uses: dpguthrie/dbt-cloud-downstream-ci-action@0.6.3
       with:
         dbt_cloud_account_id: ${{ secrets.DBT_CLOUD_ACCOUNT_ID }}
         dbt_cloud_job_id: ${{ secrets.DBT_CLOUD_JOB_ID }}
         dbt_cloud_service_token: ${{ secrets.DBT_CLOUD_SERVICE_TOKEN }}
-        dbt_cloud_host: 'cloud.getdbt.com'  # Optional
-        pull_request_id: ${{ github.event.number }}
-        git_sha: ${{ github.event.pull_request.head.sha }}
         github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
