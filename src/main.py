@@ -42,7 +42,7 @@ JOB_ID = os.getenv("INPUT_DBT_CLOUD_JOB_ID", None)
 # Github Env Vars
 REPO = os.getenv("GITHUB_REPOSITORY", None)
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", None)
-GIT_SHA = os.getenv("GIT_SHA", None)
+GIT_BRANCH = os.getenv("GITHUB_HEAD_REF", None)
 GITHUB_REF = os.getenv("GITHUB_REF", None)
 
 # Optional Env Vars
@@ -267,11 +267,10 @@ async def get_downstream_nodes(project_dict: Dict):
 
 
 async def main():
-    logger.info(f"GITHUB_REF: {GITHUB_REF}")
     all_runs = []
     payload = {
         "cause": "Triggering CI Job from GH Action",
-        "git_sha": GIT_SHA,
+        "git_branch": GIT_BRANCH,
         "schema_override": SCHEMA_OVERRIDE,
         "github_pull_request_id": PULL_REQUEST_ID,
     }
