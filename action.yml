@@ -27,9 +27,8 @@ inputs:
     required: false
     default: "build"
   github_token:
-    description: GitHub token
+    description: GitHub token used to write back to the PR results of the action
     required: false
-    default: ${{ secrets.GITHUB_TOKEN }}
 runs:
   using: "docker"
   image: "Dockerfile"
