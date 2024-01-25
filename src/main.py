@@ -274,6 +274,7 @@ async def main():
         "schema_override": SCHEMA_OVERRIDE,
         "github_pull_request_id": PULL_REQUEST_ID,
     }
+    logger.info(payload)
     all_jobs = [{"job_id": JOB_ID, "payload": payload}]
     while all_jobs:
         # Trigger the CI jobs
