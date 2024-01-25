@@ -267,6 +267,7 @@ async def get_downstream_nodes(project_dict: Dict):
 
 
 async def main():
+    logger.info(f"GITHUB_REF: {GITHUB_REF}")
     all_runs = []
     payload = {
         "cause": "Triggering CI Job from GH Action",
