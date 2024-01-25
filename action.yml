@@ -29,8 +29,37 @@ inputs:
   github_token:
     description: GitHub token used to write back to the PR results of the action
     required: false
+# runs:
+#   using: "docker"
+#   image: "Dockerfile"
+#   env:
+#     GITHUB_TOKEN: ${{ inputs.github_token }}
+
 runs:
-  using: "docker"
-  image: "Dockerfile"
-  env:
-    GITHUB_TOKEN: ${{ inputs.github_token }}
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+    - name: Install Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.9"
+    - name: Install poetry
+      uses: abatilo/actions-poetry@v2
+    - name: Setup a local virtual environment (if no poetry.toml file)
+      shell: bash
+      run: |
+        poetry config virtualenvs.create true --local
+        poetry config virtualenvs.in-project true --local
+    - uses: actions/cache@v3
+      name: Define a cache for the virtual environment based on the dependencies lock file
+      with:
+        path: ./.venv
+        key: venv-${{ hashFiles('poetry.lock') }}
+    - name: Install the project dependencies
+      shell: bash
+      run: poetry install --without dev
+    - name: Run the automated tests (for example)
+      shell: bash
+      run: poetry run main.py
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
