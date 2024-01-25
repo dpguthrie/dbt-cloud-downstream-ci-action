@@ -41,11 +41,11 @@ JOB_ID = os.getenv("INPUT_DBT_CLOUD_JOB_ID", None)
 
 # Github Env Vars
 REPO = os.getenv("GITHUB_REPOSITORY", None)
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", None)
 GIT_BRANCH = os.getenv("GITHUB_HEAD_REF", None)
 GITHUB_REF = os.getenv("GITHUB_REF", None)
 
 # Optional Env Vars
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", None)
 INCLUDE_DOWNSTREAM = str_to_bool(os.getenv("INPUT_INCLUDE_DOWNSTREAM", True))
 DBT_COMMAND = os.getenv("INPUT_DBT_COMMAND", "build")
 
@@ -274,7 +274,6 @@ async def main():
         "schema_override": SCHEMA_OVERRIDE,
         "github_pull_request_id": PULL_REQUEST_ID,
     }
-    logger.info(payload)
     all_jobs = [{"job_id": JOB_ID, "payload": payload}]
     while all_jobs:
         # Trigger the CI jobs
@@ -361,11 +360,16 @@ async def main():
     else:
         payload = {"body": "## All Runs\n\nNo downstream dependencies found."}
 
-    with httpx.Client(headers={"Authorization": f"Bearer {GITHUB_TOKEN}"}) as client:
-        url = f"https://api.github.com/repos/{REPO}/issues/{PULL_REQUEST_ID}/comments"
-        response = client.post(url, json=payload)
-        if response.is_error:
-            logger.error(response.text)
+    if GITHUB_TOKEN is not None:
+        with httpx.Client(
+            headers={"Authorization": f"Bearer {GITHUB_TOKEN}"}
+        ) as client:
+            url = (
+                f"https://api.github.com/repos/{REPO}/issues/{PULL_REQUEST_ID}/comments"
+            )
+            response = client.post(url, json=payload)
+            if response.is_error:
+                logger.error(response.text)
 
     if any(not is_run_successful(run) for run in all_runs):
         sys.exit(1)
