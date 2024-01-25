@@ -12,7 +12,7 @@ COPY /requirements ./requirements
 RUN pip install --no-cache-dir -r requirements/prod.txt
 
 # Copy the script to the container
-COPY main.py .
+COPY src/main.py .
 
 # Run the script when the container launches
 CMD ["python", "/app/main.py"]
