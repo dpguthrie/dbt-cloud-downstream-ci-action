@@ -131,7 +131,7 @@ def get_dbt_command(
         "ref_database_override": database_override,
     }
     variables_str = json.dumps(variables)
-    command += f' --vars "{variables_str}"'
+    command += f" --vars '{variables_str}'"
     return [command]
 
 
