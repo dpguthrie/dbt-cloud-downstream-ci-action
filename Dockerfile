@@ -8,8 +8,6 @@ WORKDIR /app
 # Copy the dependencies file to the working directory
 COPY /requirements ./requirements
 
-RUN pip install uv
-
 # Install any dependencies
 ENV VIRTUAL_ENV=/usr/local
 RUN pip install uv && uv pip install --no-cache -r requirements/prod.txt
