@@ -9,7 +9,6 @@ WORKDIR /app
 COPY /requirements ./requirements
 
 # Install any dependencies
-ENV VIRTUAL_ENV=/usr/local
 RUN pip install uv && uv pip install --system --no-cache -r requirements/prod.txt
 
 # Copy the script to the container
