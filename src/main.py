@@ -157,7 +157,6 @@ async def dbt_cloud_api_request(
     headers = {"Authorization": f"Bearer {TOKEN}"}
     async with httpx.AsyncClient(headers=headers) as client:
         response = await getattr(client, method)(url, **kwargs)
-        print(response.text)
         response.raise_for_status()
         return response.json()
 
