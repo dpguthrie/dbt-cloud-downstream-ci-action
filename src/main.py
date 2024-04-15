@@ -255,7 +255,7 @@ async def get_ci_job(project_id: int):
 async def get_downstream_nodes(project_dict: Dict):
     variables = {
         "environmentId": project_dict["environment_id"],
-        "filter": {"types": ["Model", "Snapshot"]},
+        "filter": {"types": ["Model"]},
     }
     payload = {"query": ENVIRONMENT_QUERY, "variables": variables}
     path = "/beta/graphql"
