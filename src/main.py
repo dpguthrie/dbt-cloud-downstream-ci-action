@@ -261,6 +261,7 @@ async def get_downstream_nodes(project_dict: Dict):
     results = await dbt_cloud_api_request(
         path, method="post", metadata=True, json=payload
     )
+    print(results)
     try:
         lineage = (
             results.get("data", {})
