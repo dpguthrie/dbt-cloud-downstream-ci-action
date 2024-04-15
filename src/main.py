@@ -71,13 +71,15 @@ query Account($accountId: BigInt!, $filter: PublicModelsFilter) {
 """
 
 ENVIRONMENT_QUERY = """
-query Lineage($environmentId: BigInt!, $filter: AppliedResourcesFilter!) {
+query Lineage($environmentId: BigInt!, $filter: LineageFilter!) {
   environment(id: $environmentId) {
     applied {
       lineage(filter: $filter) {
         uniqueId
         name
-        publicParentIds
+        ... on ModelLineageNode {
+          publicParentIds
+        }
       }
     }
   }
