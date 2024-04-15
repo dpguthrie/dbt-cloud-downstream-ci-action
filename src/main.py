@@ -262,12 +262,16 @@ async def get_downstream_nodes(project_dict: Dict):
     results = await dbt_cloud_api_request(
         path, method="post", metadata=True, json=payload
     )
-    lineage = (
-        results.get("data", {})
-        .get("environment", {})
-        .get("applied", {})
-        .get("lineage", [])
-    )
+    try:
+        lineage = (
+            results.get("data", {})
+            .get("environment", {})
+            .get("applied", {})
+            .get("lineage", [])
+        )
+    except AttributeError:
+        return []
+
     return [
         node
         for node in lineage
